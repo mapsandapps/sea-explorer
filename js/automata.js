@@ -2,31 +2,26 @@ function Automata(width, height) {
   this.width = Math.floor(width);
   this.height = Math.floor(height);
   this.cells = [];
-  this.SPAWN_CHANCE = 12; //Percentage Chance to Spawn a child cell
 
-  // Initialize Map
+  // initialize Map
   this.resetMap();
 }
 
 Automata.prototype.resetMap = function() {
   this.map = [];
   for (var y = 0; y < this.height; y++) {
-
-    // Creates an empty lxne
     this.map.push([]);
 
-    // Adds this.width to the empty lxne:
     this.map[y].push(new Array(this.width));
 
-    // Initialize Map
     for (var x = 0; x < this.width; x++) {
-      this.map[y][x] = TERRAIN_LAND;
+      this.map[y][x] = TERRAIN_WATER;
     }
   }
 };
 
 Automata.prototype.print = function () {
-  //Print the Current Map
+  // print the Current Map
   var printedMap = '\n';
   for (var y = 0; y < this.height; y++) {
     for (var x = 0; x < this.width; x++) {
@@ -34,7 +29,7 @@ Automata.prototype.print = function () {
       if (this.map[y][x] === TERRAIN_WATER) {
         cell = '~';
       } else {
-        cell = '.';
+        cell = this.map[y][x];
       }
       printedMap += cell;
     }
@@ -59,58 +54,56 @@ Automata.prototype.csv = function () {
   return printedMap;
 };
 
-Automata.prototype.addCell = function (xpos, ypos) {
+Automata.prototype.addCell = function (xpos, ypos, terrain) {
   var x = xpos || Math.floor(this.width / 2);
   var y = ypos || Math.floor(this.height / 2);
   var cell = new Cell(x, y, this.map[y][x]);
-  this.map[cell.y][cell.x] = TERRAIN_WATER;
+  cell.terrain = terrain;
+  this.map[cell.y][cell.x] = terrain;
 
   this.cells.push(cell);
 };
 
-Automata.prototype.step = function() {
-    for (var d = 0; d < this.cells.length; d++) {
-      var cell = this.cells[d];
-      if (cell.alive) {
-        //Live To Win...till you die
-        this.map = cell.cycle(this.map);
-
-        if (Math.floor(Math.random() * 100) <= this.SPAWN_CHANCE) { //Percent in 100 to spawn a child cell
-          if (cell.neighbours(this.map).length > 0) {
-            var move_to = cell.neighbours(this.map)[Math.floor(Math.random() * cell.neighbours(this.map).length)];
-            this.addCell(move_to.x, move_to.y);
-          }
-        }
+Automata.prototype.addIsland = function(terrain) {
+  // place island at random map point, unless there is already land there
+  // TODO: decide if the island should be placed somewhere else if there is already land (if the map is all already land, this will be a bug) or if it should just not exist
+  var retries = 4;
+  while (retries > 0) {
+    var xpos = Math.floor(Math.random() * this.width);
+    var ypos = Math.floor(Math.random() * this.height);
+    if (this.map[ypos][xpos] === TERRAIN_WATER) {
+      this.addCell(xpos, ypos, terrain);
+      retries = 0;
+    } else {
+      if (retries === 1) {
+        console.warn('FAILED TO PLACE ISLAND, NO TRIES LEFT');
       } else {
-        //Remove Cell from Cells
-        var index = this.cells.indexOf(cell);
-        if (index > -1) {
-          this.cells.splice(index, 1);
-        }
+        console.warn('FAILED TO PLACE ISLAND, RETRYING');
       }
     }
-};
+    retries--;
+  }
+}
 
 Automata.prototype.generate = function() {
   if (this.cells.length === 0) {
-    this.addCell();
+    // TODO: make this a for loop
+    this.addIsland(TERRAIN_1);
+    this.addIsland(TERRAIN_2);
+    this.addIsland(TERRAIN_3);
+    this.addIsland(TERRAIN_4);
+    this.addIsland(TERRAIN_5);
+    this.addIsland(TERRAIN_6);
+    this.addIsland(TERRAIN_7);
   }
 
   while (this.cells.length > 0) {
     for (var d = 0; d < this.cells.length; d++) {
       var cell = this.cells[d];
       if (cell.alive) {
-        //Live To Win...till you die
         this.map = cell.cycle(this.map);
-
-        if (Math.floor(Math.random() * 100) <= this.SPAWN_CHANCE) { //Percent in 100 to spawn a child cell
-          if (cell.neighbours(this.map).length > 0) {
-            var move_to = cell.neighbours(this.map)[Math.floor(Math.random() * cell.neighbours(this.map).length)];
-            this.addCell(move_to.x, move_to.y);
-          }
-        }
       } else {
-        //Remove Cell from Cells
+        // remove cell from cells
         var index = this.cells.indexOf(cell);
         if (index > -1) {
           this.cells.splice(index, 1);
@@ -120,20 +113,7 @@ Automata.prototype.generate = function() {
   }
 };
 
-Automata.prototype.cleanup = function() {
-  //Iterate through map and remove isolated cells
-  for (var y = 0; y < this.height; y++) {
-    for (var x = 0; x < this.width; x++) {
-      var cell = new Cell(x, y, this.map[y][x]);
-      if (cell.neighbours(this.map).length < 1) {
-        this.map[y][x] = TERRAIN_WATER;
-      }
-    }
-  }
-};
-
 var Cell = function Cell(xpos, ypos) {
-
   this.alive = true;
   this.cycleLimit = 30;
 
@@ -142,77 +122,104 @@ var Cell = function Cell(xpos, ypos) {
 };
 
 Cell.prototype = {
-  north: function north() {
+  north: function north(map) {
     var x = this.x;
     var y = this.y - 1;
+    if (y < 0) return;
     var direction = 'north';
-    return { x: x, y: y, direction: direction };
+    var terrain = map[y][x];
+    return { x: x, y: y, direction: direction, terrain: terrain };
   },
-  east: function east() {
+  east: function east(map) {
     var x = this.x + 1;
     var y = this.y;
+    if (y >= map[0].length) return;
     var direction = 'east';
-    return { x: x, y: y, direction: direction };
+    var terrain = map[y][x];
+    return { x: x, y: y, direction: direction, terrain: terrain };
   },
-  south: function south() {
+  south: function south(map) {
     var x = this.x;
     var y = this.y + 1;
+    if (y >= map.length) return;
     var direction = 'south';
-    return { x: x, y: y, direction: direction };
+    var terrain = map[y][x];
+    return { x: x, y: y, direction: direction, terrain: terrain };
   },
-  west: function west() {
+  west: function west(map) {
     var x = this.x - 1;
     var y = this.y;
+    if (y < 0) return;
     var direction = 'west';
-    return { x: x, y: y, direction: direction };
+    var terrain = map[y][x];
+    return { x: x, y: y, direction: direction, terrain: terrain };
   },
   moveTo: function moveTo(pos) {
     this.x = pos.x;
     this.y = pos.y;
   },
   cycle: function cycle(map) {
-    var move_to = this.neighbours(map)[Math.floor(Math.random() * this.neighbours(map).length)];
-    if (this.alive) {
-      this.x = move_to.x;
-      this.y = move_to.y;
-      map[move_to.y][move_to.x] = TERRAIN_WATER;
+    if (this.neighbors(map).length > 0) {
+      var moveTo = this.neighbors(map)[Math.floor(Math.random() * this.neighbors(map).length)];
+      if (this.alive) {
+        this.x = moveTo.x;
+        this.y = moveTo.y;
+        // check that this cell's neighbors are all either this.terrain or water; only move if so
+        if (!bordersAnotherIsland(moveTo, map, this.terrain)) {
+          map[moveTo.y][moveTo.x] = this.terrain;
+        } else {
+          this.alive = false;
+        }
+      }
     }
     return map;
   }
 };
 
-Cell.prototype.checkNeighbour = function (pos, map) {
-  var width = map[0].length;
-  var height = map.length;
+function isAnotherIsland(cell, currentIsland) {
+  if (cell) {
+    return cell.terrain !== currentIsland && cell.terrain !== TERRAIN_WATER;
+  }
+  return null;
+}
+
+function bordersAnotherIsland(pos, map, currentTerrain) {
+  var posCell = new Cell(pos.x, pos.y);
+  if (isAnotherIsland(posCell.north(map), currentTerrain)) return true;
+  if (isAnotherIsland(posCell.east(map), currentTerrain)) return true;
+  if (isAnotherIsland(posCell.south(map), currentTerrain)) return true;
+  if (isAnotherIsland(posCell.west(map), currentTerrain)) return true;
+  return false;
+}
+
+Cell.prototype.checkNeighbour = function(pos, map) {
   try {
-    if (pos.x < 0 || pos.y < 0 || pos.x > width || pos.y > height || map[pos.y][pos.x] === TERRAIN_WATER) {
+    if (map[pos.y][pos.x] !== TERRAIN_WATER) {
       return false;
     } else {
       return true;
     }
-  } catch (err) {
+  } catch(err) {
     // console.log(pos.x, pos.y, err);
   }
 };
 
-Cell.prototype.neighbours = function (map) {
-  var neighbours = [];
-  if (this.checkNeighbour(this.north(), map)) {
-    neighbours.push(this.north());
+Cell.prototype.neighbors = function(map) {
+  var neighbors = [];
+  if (this.checkNeighbour(this.north(map), map)) {
+    neighbors.push(this.north(map));
   }
-  if (this.checkNeighbour(this.east(), map)) {
-    neighbours.push(this.east());
+  if (this.checkNeighbour(this.east(map), map)) {
+    neighbors.push(this.east(map));
   }
-  if (this.checkNeighbour(this.south(), map)) {
-    neighbours.push(this.south());
+  if (this.checkNeighbour(this.south(map), map)) {
+    neighbors.push(this.south(map));
   }
-  if (this.checkNeighbour(this.west(), map)) {
-    neighbours.push(this.west());
+  if (this.checkNeighbour(this.west(map), map)) {
+    neighbors.push(this.west(map));
   }
-  if (neighbours.length === 0) {
+  if (neighbors.length === 0) {
     this.alive = false;
   }
-
-  return neighbours;
+  return neighbors;
 };
-

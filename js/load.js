@@ -53,7 +53,7 @@ Game.Load.prototype = {
     //Temporary Sprites
     this.game.load.spritesheet('player', 'assets/images/ship.png', 32, 32, 4, 0, 0);
 
-    this.game.load.spritesheet('background', 'assets/images/backgrounds.png', 32, 32, 3, 0, 0);
+    this.game.load.spritesheet('background', 'assets/images/backgrounds.png', 32, 32, 8, 0, 0);
     this.game.load.spritesheet('animals', 'assets/images/animals.png', 64, 64, 16, 0, 0);
     this.game.load.spritesheet('plants', 'assets/images/plants.png', 64, 64, 16, 0, 0);
     this.game.load.image('intro','assets/images/intro.png');

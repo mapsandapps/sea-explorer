@@ -26,7 +26,7 @@ var uncaughtAnimals;
 var uncaughtPlants;
 var uniqueInventory = [];
 
-var TERRAIN_LAND, TERRAIN_WATER;
+var TERRAIN_WATER, TERRAIN_1, TERRAIN_2, TERRAIN_3, TERRAIN_4, TERRAIN_5, TERRAIN_6, TERRAIN_7;
 
 var map;
 var player,actorList,actorMap,livingEnemies,acted;
@@ -359,13 +359,13 @@ Game.Play.prototype = {
 
     this.createActor('player', 'player', 'player');
 
-    for(var i = 0; i < INITIAL_ANIMALS; i++) {
-      this.createActor(`animal${i}`, 'animal', 'animals', _.random(0, 15));
-    }
+    // for(var i = 0; i < INITIAL_ANIMALS; i++) {
+    //   this.createActor(`animal${i}`, 'animal', 'animals', _.random(0, 15));
+    // }
 
-    for(var i = 0; i < INITIAL_PLANTS; i++) {
-      this.createActor(`plant${i}`, 'plant', 'plants', _.random(0, 15));
-    }
+    // for(var i = 0; i < INITIAL_PLANTS; i++) {
+    //   this.createActor(`plant${i}`, 'plant', 'plants', _.random(0, 15));
+    // }
 
     uncaughtAnimals = INITIAL_ANIMALS;
     uncaughtPlants = INITIAL_PLANTS;
@@ -374,12 +374,17 @@ Game.Play.prototype = {
     this.game.camera.follow(player);
   },
   loadLevel: function() {
-    TERRAIN_WATER = 0; // in Space Naturalist, these were chosen randomly
-    TERRAIN_LAND = _.random(1, 2); // sets it random for the whole level FIXME
+    TERRAIN_WATER = 0;
+    TERRAIN_1 = 1;
+    TERRAIN_2 = 2;
+    TERRAIN_3 = 3;
+    TERRAIN_4 = 4;
+    TERRAIN_5 = 5;
+    TERRAIN_6 = 6;
+    TERRAIN_7 = 7;
 
     this.auto = new Automata(COLS, ROWS);
     this.auto.generate();
-    this.auto.cleanup();
 
     var cave = this.auto.csv();
     this.auto.print();
@@ -399,7 +404,7 @@ Game.Play.prototype = {
     scoreText.anchor.setTo(1, 0);
     scoreText.fixedToCamera = true;
 
-    for (i = 0; i < timeTurnerCount; i++) {
+    for (var i = 0; i < timeTurnerCount; i++) {
       var timeTurnerImage = this.game.add.image(20 + i * (64 + 10), 20, 'timeTurner');
       timeTurnerImage.anchor.setTo(0, 0);
       timeTurnerImage.fixedToCamera = true;
