@@ -1,8 +1,7 @@
 var INITIAL_ANIMALS = 10;
 var INITIAL_PLANTS = 10;
 var INITIAL_TIME_TURNERS = 3;
-var INITIAL_TURNS = 20;
-var TIME_TURNER_TURNS = 10;
+var INITIAL_SUPPLIES = 20;
 
 var wKey;
 var aKey;
@@ -18,17 +17,16 @@ var inventory = [];
 var inventoryGrids = [];
 var inventoryImages = [];
 var level = 0;
-var saveStates = [];
 var score = 0;
 var scoreText;
 var timeTurnerCount = INITIAL_TIME_TURNERS;
 var timeTurnerImages = [];
-var turnCounter = INITIAL_TURNS;
+var suppliesCounter = INITIAL_SUPPLIES;
 var uncaughtAnimals;
 var uncaughtPlants;
 var uniqueInventory = [];
 
-var TERRAIN_1,TERRAIN_2;
+var TERRAIN_LAND, TERRAIN_WATER;
 
 var map;
 var player,actorList,actorMap,livingEnemies,acted;
@@ -107,28 +105,11 @@ function moveActor(actor, dir) {
 }
 
 function movePlayer() {
-  turnCounter--;
-  turnsText.setText(`${turnCounter} / ${INITIAL_TURNS}`);
-  if (turnCounter < 1) {
+  suppliesCounter--;
+  suppliesText.setText(suppliesCounter);
+  if (suppliesCounter < 1) {
     gameEnds();
   }
-}
-
-function reloadActors(actorData) {
-  actorMap = {};
-  _.forOwn(actorData, savedData => {
-    // find the actor in the list that has the same id as data and place it
-    var actorInList = _.find(actorList, ['meta.id', savedData.id]);
-    if (!actorInList.exists) {
-      // un-kill it
-      actorInList.reset(savedData.x, savedData.y);
-    }
-    actorInList.tx = savedData.tx;
-    actorInList.ty = savedData.ty;
-    actorInList.x = savedData.tx * TILE_SIZE;
-    actorInList.y = savedData.ty * TILE_SIZE;
-    actorMap[savedData.ty + '_' + savedData.tx] = actorInList;
-  });
 }
 
 function saveState() {
@@ -146,12 +127,7 @@ function saveState() {
       inventory: _.cloneDeep(inventory),
       score: score,
       timeTurnerCount: timeTurnerCount,
-      turnCounter: turnCounter
-    }
-    saveStates.push(newState);
-
-    if (saveStates.length > timeTurnerCount * TIME_TURNER_TURNS) {
-      saveStates.shift();
+      suppliesCounter: suppliesCounter
     }
   }
 }
@@ -161,8 +137,7 @@ function gameEnds() {
   level = 0;
   inventory = [];
   uniqueInventory = [];
-  saveStates = [];
-  turnCounter = INITIAL_TURNS;
+  suppliesCounter = INITIAL_SUPPLIES;
   timeTurnerCount = INITIAL_TIME_TURNERS;
   // TODO: more things need to reset!
   // deadSnd.play();
@@ -172,7 +147,7 @@ function gameEnds() {
   loseMsg.anchor.setTo(0.5);
   loseMsg.fixedToCamera = true;
 
-  var highestScore = parseInt(JSON.parse(localStorage.getItem('atRogueSlasherHighestScore')));
+  var highestScore = parseInt(JSON.parse(localStorage.getItem('seaExplorerHighScore')));
   if (highestScore > 0) {
     var scoreText = this.game.add.text(game.width / 2, game.height - 40, 'High Score: ' + highestScore);
     scoreText.font = 'kenney_future_narrowregular';
@@ -211,7 +186,7 @@ Game.Play.prototype = {
 		this.game.stage.backgroundColor = '#000';
 
 
-    this.highestScore = parseInt(JSON.parse(localStorage.getItem('atRogueSlasherHighestScore')));
+    this.highestScore = parseInt(JSON.parse(localStorage.getItem('seaExplorerHighScore')));
     // this.game.input.keyboard.addCallbacks(null, null, onKeyUp);
 
     // SFX
@@ -285,28 +260,6 @@ Game.Play.prototype = {
       this.loadActors();
     }
   },
-  restoreFromState: function(turnsBack) {
-    var numberOfTurns = _.min([turnsBack, saveStates.length]);
-    var turnBeingRestored = numberOfTurns >= saveStates.length ? saveStates[0] : saveStates[saveStates.length - numberOfTurns];
-    console.log('restoring to counter', turnBeingRestored.turnCounter);
-
-
-    turnCounter = turnCounter + numberOfTurns;
-    turnsText.setText(`${turnCounter} / ${INITIAL_TURNS}`);
-    reloadActors(turnBeingRestored.actorData);
-    score = turnBeingRestored.score;
-    scoreText.setText(`Score: ${score}`);
-    inventory = turnBeingRestored.inventory;
-
-    // remove last `numberOfTurns` items from saveStates
-    if (numberOfTurns >= saveStates.length) {
-      saveStates = [];
-    } else if (timeTurnerCount < 1) {
-      saveStates = [];
-    } else {
-      saveStates.splice(saveStates.length - numberOfTurns, numberOfTurns);
-    }
-  },
   onKeyUp: function(key) {
     if (player.alive === false)
       return
@@ -322,7 +275,7 @@ Game.Play.prototype = {
     } else if (key === this.cursors.right || key === dKey) {
       this.movement.right();
     } else if (key === tKey) {
-      this.turnTime();
+      this.turnTime(_.random(5, 20));
     }
 
     if (acted) {
@@ -340,9 +293,13 @@ Game.Play.prototype = {
       });
     };
   },
-  turnTime: function() {
-    if (timeTurnerCount > 0) {
-      this.restoreFromState(TIME_TURNER_TURNS);
+  turnTime: function(supplies) { // probably have the number of supplies as a parameter
+    if (timeTurnerCount > 0) { // TODO: this mechanism will work differently
+      // add turns
+      suppliesCounter = suppliesCounter + supplies;
+      suppliesText.setText(suppliesCounter);
+
+      // remove a time turner
       var timeTurnerIndex = timeTurnerCount - 1;
       timeTurnerImages[timeTurnerIndex].destroy();
       timeTurnerContainer = this.game.add.image(20 + timeTurnerIndex * (64 + 10), 20, 'timeTurnerEmpty');
@@ -361,7 +318,7 @@ Game.Play.prototype = {
       });
       // if there are more items shown than in uniqueInventory, delete the extras
       if (inventoryImages.length > uniqueInventory.length) {
-        for (i = uniqueInventory.length ; i < inventoryImages.length; i++) {
+        for (var i = uniqueInventory.length ; i < inventoryImages.length; i++) {
           inventoryImages[i].destroy();
           inventoryGrids[i].destroy();
         }
@@ -386,12 +343,11 @@ Game.Play.prototype = {
       actor.mobile = false;
     }
     do {
-      // TODO: i actually don't want to place plants and animals randomly
       actor.ty = _.random(ROWS - 1);
       actor.tx = _.random(COLS - 1);
       actor.y = actor.ty*TILE_SIZE;
       actor.x = actor.tx*TILE_SIZE;
-    } while( map[actor.ty][actor.tx] == TERRAIN_2  || actorMap[actor.ty + "_" + actor.tx] != null );
+    } while (map[actor.ty][actor.tx] == TERRAIN_WATER || actorMap[actor.ty + "_" + actor.tx] != null);
 
     //Add references
     actorMap[actor.ty + "_" + actor.tx] = actor;
@@ -418,17 +374,15 @@ Game.Play.prototype = {
     this.game.camera.follow(player);
   },
   loadLevel: function() {
-    TERRAIN_1 = _.random(0, 15);
-    TERRAIN_2 = _.random(0, 15);
-    while (TERRAIN_1 === TERRAIN_2) {
-      TERRAIN_2 = _.random(0, 15);
-    }
+    TERRAIN_WATER = 0; // in Space Naturalist, these were chosen randomly
+    TERRAIN_LAND = _.random(1, 2); // sets it random for the whole level FIXME
 
     this.auto = new Automata(COLS, ROWS);
     this.auto.generate();
     this.auto.cleanup();
 
     var cave = this.auto.csv();
+    this.auto.print();
 		map = this.auto.map;
 
     this.game.load.tilemap('level', null, cave, Phaser.Tilemap.CSV );
@@ -456,19 +410,19 @@ Game.Play.prototype = {
     hourglass.anchor.setTo(0, 1);
     hourglass.fixedToCamera = true;
     hourglass.scale.setTo(0.5, 0.5);
-    turnsText = this.game.add.text(134, game.height - 36, `${turnCounter} / ${INITIAL_TURNS}`);
-    turnsText.font = 'kenney_future_narrowregular';
-    turnsText.fontSize = 18;
-    turnsText.addColor('#ffffff', 0);
-    turnsText.anchor.setTo(1, 1);
-    turnsText.fixedToCamera = true;
+    suppliesText = this.game.add.text(134, game.height - 36, suppliesCounter);
+    suppliesText.font = 'kenney_future_narrowregular';
+    suppliesText.fontSize = 18;
+    suppliesText.addColor('#ffffff', 0);
+    suppliesText.anchor.setTo(1, 1);
+    suppliesText.fixedToCamera = true;
   },
   update: function() {
     this.game.physics.arcade.collide(player, this.layer);
 
     if (score > this.highestScore) {
       this.highestScore = score;
-      localStorage.setItem('atRogueSlasherHighestScore', score);
+      localStorage.setItem('seaExplorerHighScore', score);
     }
   }
 };

@@ -1,13 +1,14 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #111111;
+  background-color: #ECDCB8;
 }
 
 #game {
-  background-color: #111111;
+  background-color: #ECDCB8;
 }
 
 #game canvas {
-  margin:0 auto
+  margin:0 auto;
+  border: 1px solid #222;
 }

@@ -1,5 +1,5 @@
-var ROWS = 20;
-var COLS = 30;
+var ROWS = 50; // map size
+var COLS = 50;
 var TILE_SIZE = 64;
 
 var Game = {
@@ -7,8 +7,8 @@ var Game = {
   h: ROWS * TILE_SIZE
 };
 
-if (localStorage.getItem('atRogueSlasherHighestScore') === null) { // TODO
-  localStorage.setItem('atRogueSlasherHighestScore', 0);
+if (localStorage.getItem('seaExplorerHighScore') === null) { // TODO
+  localStorage.setItem('seaExplorerHighScore', 0);
 }
 
 Game.Boot = function(game) {
@@ -48,9 +48,9 @@ Game.Load.prototype = {
   	this.game.load.setPreloadSprite(preloading);
 
     //Temporary Sprites
-    this.game.load.spritesheet('player', 'assets/images/adventurer.png', 45, 64, 4, 0, 0);
+    this.game.load.spritesheet('player', 'assets/images/ship.png', 64, 64, 4, 0, 0);
 
-    this.game.load.spritesheet('background', 'assets/images/backgrounds.png', 64, 64, 16, 0, 0);
+    this.game.load.spritesheet('background', 'assets/images/backgrounds.png', 64, 64, 2, 0, 0);
     this.game.load.spritesheet('animals', 'assets/images/animals.png', 64, 64, 16, 0, 0);
     this.game.load.spritesheet('plants', 'assets/images/plants.png', 64, 64, 16, 0, 0);
     this.game.load.image('intro','assets/images/intro.png');

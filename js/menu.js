@@ -7,7 +7,7 @@ Game.Menu.prototype =  {
     create: function() {
         this.instructions = this.game.add.sprite(0, 0, 'intro');
 
-        this.highestScore = parseInt(JSON.parse(localStorage.getItem('atRogueSlasherHighestScore')));
+        this.highestScore = parseInt(JSON.parse(localStorage.getItem('seaExplorerHighScore')));
         if (this.highestScore > 0) {
           var scoreText = this.game.add.text(game.width / 2, game.height - 40, 'High Score: ' + this.highestScore);
           scoreText.font = 'kenney_future_narrowregular';

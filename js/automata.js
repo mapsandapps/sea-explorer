@@ -2,11 +2,12 @@ function Automata(width, height) {
   this.width = Math.floor(width);
   this.height = Math.floor(height);
   this.cells = [];
-  this.spawnChance = 7; //Percentage Chance to Spawn a child cell
+  this.SPAWN_CHANCE = 12; //Percentage Chance to Spawn a child cell
 
   // Initialize Map
   this.resetMap();
 }
+
 Automata.prototype.resetMap = function() {
   this.map = [];
   for (var y = 0; y < this.height; y++) {
@@ -19,51 +20,50 @@ Automata.prototype.resetMap = function() {
 
     // Initialize Map
     for (var x = 0; x < this.width; x++) {
-      this.map[y][x] = TERRAIN_2;
+      this.map[y][x] = TERRAIN_LAND;
     }
   }
 };
 
-
 Automata.prototype.print = function () {
   //Print the Current Map
-  var printed_map = '';
+  var printedMap = '\n';
   for (var y = 0; y < this.height; y++) {
     for (var x = 0; x < this.width; x++) {
       var cell = '';
-      if (this.map[y][x] === TERRAIN_2) {
-        cell = '#';
+      if (this.map[y][x] === TERRAIN_WATER) {
+        cell = '~';
       } else {
         cell = '.';
       }
-      printed_map += cell;
+      printedMap += cell;
     }
-    printed_map += "\n";
+    printedMap += "\n";
   }
-  return printed_map;
+  console.log(printedMap);
+  return printedMap;
 };
 
 Automata.prototype.csv = function () {
   //Save the map as a CSV string
-  var printed_map = '';
+  var printedMap = '';
   for (var y = 0; y < this.height; y++) {
     for (var x = 0; x < this.width; x++) {
-      printed_map += this.map[y][x];
+      printedMap += this.map[y][x];
       if (x < this.width - 1) {
-        printed_map += ',';
+        printedMap += ',';
       }
     }
-    printed_map += "\n";
+    printedMap += "\n";
   }
-  console.log(printed_map);
-  return printed_map;
+  return printedMap;
 };
 
 Automata.prototype.addCell = function (xpos, ypos) {
   var x = xpos || Math.floor(this.width / 2);
   var y = ypos || Math.floor(this.height / 2);
   var cell = new Cell(x, y, this.map[y][x]);
-  this.map[cell.y][cell.x] = TERRAIN_1;
+  this.map[cell.y][cell.x] = TERRAIN_WATER;
 
   this.cells.push(cell);
 };
@@ -75,7 +75,7 @@ Automata.prototype.step = function() {
         //Live To Win...till you die
         this.map = cell.cycle(this.map);
 
-        if (Math.floor(Math.random() * 100) <= this.spawnChance) { //Percent in 100 to spawn a child cell
+        if (Math.floor(Math.random() * 100) <= this.SPAWN_CHANCE) { //Percent in 100 to spawn a child cell
           if (cell.neighbours(this.map).length > 0) {
             var move_to = cell.neighbours(this.map)[Math.floor(Math.random() * cell.neighbours(this.map).length)];
             this.addCell(move_to.x, move_to.y);
@@ -103,7 +103,7 @@ Automata.prototype.generate = function() {
         //Live To Win...till you die
         this.map = cell.cycle(this.map);
 
-        if (Math.floor(Math.random() * 100) <= this.spawnChance) { //Percent in 100 to spawn a child cell
+        if (Math.floor(Math.random() * 100) <= this.SPAWN_CHANCE) { //Percent in 100 to spawn a child cell
           if (cell.neighbours(this.map).length > 0) {
             var move_to = cell.neighbours(this.map)[Math.floor(Math.random() * cell.neighbours(this.map).length)];
             this.addCell(move_to.x, move_to.y);
@@ -126,7 +126,7 @@ Automata.prototype.cleanup = function() {
     for (var x = 0; x < this.width; x++) {
       var cell = new Cell(x, y, this.map[y][x]);
       if (cell.neighbours(this.map).length < 1) {
-        this.map[y][x] = TERRAIN_1;
+        this.map[y][x] = TERRAIN_WATER;
       }
     }
   }
@@ -175,7 +175,7 @@ Cell.prototype = {
     if (this.alive) {
       this.x = move_to.x;
       this.y = move_to.y;
-      map[move_to.y][move_to.x] = TERRAIN_1;
+      map[move_to.y][move_to.x] = TERRAIN_WATER;
     }
     return map;
   }
@@ -185,7 +185,7 @@ Cell.prototype.checkNeighbour = function (pos, map) {
   var width = map[0].length;
   var height = map.length;
   try {
-    if (pos.x < 0 || pos.y < 0 || pos.x > width || pos.y > height || map[pos.y][pos.x] === TERRAIN_1) {
+    if (pos.x < 0 || pos.y < 0 || pos.x > width || pos.y > height || map[pos.y][pos.x] === TERRAIN_WATER) {
       return false;
     } else {
       return true;
