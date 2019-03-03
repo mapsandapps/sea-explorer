@@ -1,6 +1,6 @@
 var ROWS = 50; // map size
 var COLS = 50;
-var TILE_SIZE = 64;
+var TILE_SIZE = 32;
 
 var Game = {
   w: COLS * TILE_SIZE,
@@ -25,6 +25,9 @@ Game.Boot.prototype = {
     // this.game.scale.maxHeight = window.innerHeight;
     // this.game.scale.maxWidth = window.innerHeight*(Game.w/Game.h);
 
+    this.game.scale.width = '50%';
+    this.game.scale.height = '50%';
+
   },
   create: function() {
    this.game.state.start('Load');
@@ -44,13 +47,13 @@ Game.Load.prototype = {
     //Loading Screen Message/bar
     var loadingText = this.game.add.text(Game.w, Game.h, 'Loading...', { font: '30px Helvetica', fill: '#000' });
   	loadingText.anchor.setTo(0.5, 0.5);
-  	var preloading = this.game.add.sprite(Game.w/2-64, Game.h/2+50, 'loading');
+  	var preloading = this.game.add.sprite(Game.w / 2 - 64, Game.h / 2 + 50, 'loading');
   	this.game.load.setPreloadSprite(preloading);
 
     //Temporary Sprites
-    this.game.load.spritesheet('player', 'assets/images/ship.png', 64, 64, 4, 0, 0);
+    this.game.load.spritesheet('player', 'assets/images/ship.png', 32, 32, 4, 0, 0);
 
-    this.game.load.spritesheet('background', 'assets/images/backgrounds.png', 64, 64, 2, 0, 0);
+    this.game.load.spritesheet('background', 'assets/images/backgrounds.png', 32, 32, 3, 0, 0);
     this.game.load.spritesheet('animals', 'assets/images/animals.png', 64, 64, 16, 0, 0);
     this.game.load.spritesheet('plants', 'assets/images/plants.png', 64, 64, 16, 0, 0);
     this.game.load.image('intro','assets/images/intro.png');
